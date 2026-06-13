@@ -44,7 +44,7 @@ export default function Login({ onLogin, error }) {
         <div style={styles.hint}>
           <strong>Accesos de prueba:</strong><br />
           Admin: <code>admin</code> / <code>admin123</code><br />
-          Estudiante: <code>estudiante</code> / <code>1234</code>
+          Estudiante: <code>pparker</code> / <code>spiderman</code> (Peter Parker)
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
-import React, { useState, createContext } from 'react';
-import { api } from './api';
+import React, { useState, createContext, useEffect } from 'react';
+import { api, setAuthToken } from './api';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Estudiantes from './pages/Estudiantes';
@@ -36,9 +36,21 @@ export default function App() {
   const [page, setPage] = useState('dashboard');
   const [loginError, setLoginError] = useState('');
 
+  // Maneja la expiracion de sesion (401 desde el backend)
+  useEffect(() => {
+    const handler = () => {
+      setUser(null);
+      setPage('dashboard');
+      setLoginError('La sesion expiro. Por favor ingrese nuevamente.');
+    };
+    window.addEventListener('auth:expired', handler);
+    return () => window.removeEventListener('auth:expired', handler);
+  }, []);
+
   async function handleLogin(username, password) {
     try {
       const u = await api.login(username, password);
+      setAuthToken(u.token);
       setUser(u);
       setPage('dashboard');
       setLoginError('');
@@ -48,6 +60,8 @@ export default function App() {
   }
 
   function handleLogout() {
+    api.logout().catch(() => {});
+    setAuthToken(null);
     setUser(null);
     setPage('dashboard');
   }
@@ -77,7 +91,7 @@ export default function App() {
       <div style={styles.shell}>
         <nav style={styles.sidebar}>
           <div style={styles.logo}>
-            <span style={styles.logoIcon}>⚽</span>
+            <span style={styles.logoIcon}>&#9917;</span>
             <div>
               <div style={styles.logoTitle}>Deportes UNI</div>
               <div style={styles.logoSub}>Sistema deportivo</div>

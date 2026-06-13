@@ -9,6 +9,8 @@ services:
       MYSQL_DATABASE: deportes_uni
       MYSQL_USER: deportes_user
       MYSQL_PASSWORD: deportes_pass
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     ports:
       - "3306:3306"
     volumes:

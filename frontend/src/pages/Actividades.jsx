@@ -10,6 +10,7 @@ export default function Actividades({ user }) {
   const [rows, setRows] = useState([]);
   const [disciplinas, setDisciplinas] = useState([]);
   const [espacios, setEspacios] = useState([]);
+  const [misInscripciones, setMisInscripciones] = useState({}); // id_actividad → inscripcion
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -22,8 +23,21 @@ export default function Actividades({ user }) {
 
   const load = () => {
     setLoading(true);
-    Promise.all([api.getActividades(), api.getDisciplinas(), api.getEspacios()])
-      .then(([a, d, e]) => { setRows(a); setDisciplinas(d); setEspacios(e); })
+    const promises = [api.getActividades(), api.getDisciplinas(), api.getEspacios()];
+    if (!isAdmin) {
+      promises.push(api.getInscripciones({ id_estudiante: user.id_estudiante }));
+    }
+    Promise.all(promises)
+      .then(([a, d, e, misInsc]) => {
+        setRows(a);
+        setDisciplinas(d);
+        setEspacios(e);
+        if (misInsc) {
+          const map = {};
+          misInsc.forEach(i => { map[i.id_actividad] = i; });
+          setMisInscripciones(map);
+        }
+      })
       .finally(() => setLoading(false));
   };
   useEffect(load, []);
@@ -44,7 +58,7 @@ export default function Actividades({ user }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('¿Eliminar actividad?')) return;
+    if (!window.confirm('Eliminar actividad?')) return;
     try { await api.deleteActividad(id); load(); }
     catch (e) { alert(e.message); }
   }
@@ -54,7 +68,9 @@ export default function Actividades({ user }) {
     try {
       const res = await api.createInscripcion({ id_estudiante: user.id_estudiante, id_actividad });
       setInscMsg({
-        text: res.estado === 'confirmada' ? '✓ Inscripción confirmada.' : '⏳ Sin cupo disponible. Quedaste en lista de espera.',
+        text: res.estado === 'confirmada'
+          ? 'Inscripcion confirmada.'
+          : 'Sin cupo disponible. Quedaste en lista de espera.',
         type: res.estado === 'confirmada' ? 'success' : 'info'
       });
       load();
@@ -64,13 +80,19 @@ export default function Actividades({ user }) {
     setTimeout(() => setInscMsg({ text: '', type: 'success' }), 4000);
   }
 
+  async function handleCancelarInscripcion(id_inscripcion) {
+    if (!window.confirm('Cancelar tu inscripcion en esta actividad?')) return;
+    try { await api.deleteInscripcion(id_inscripcion); load(); }
+    catch (e) { alert(e.message); }
+  }
+
   const filtered = filterEstado ? rows.filter(r => r.estado === filterEstado) : rows;
 
   const columns = [
     { key: 'nombre', label: 'Actividad' },
     { key: 'disciplina_nombre', label: 'Disciplina' },
     { key: 'espacio_nombre', label: 'Espacio' },
-    { key: 'dia', label: 'Día' },
+    { key: 'dia', label: 'Dia' },
     { key: 'horario', label: 'Horario', render: r => r.horario?.substring(0, 5) },
     { key: 'cupo', label: 'Cupo', render: r => <span>{r.confirmados || 0} / {r.cupo_maximo}</span> },
     { key: 'estado', label: 'Estado', render: r => estadoBadge(r.estado) },
@@ -81,13 +103,33 @@ export default function Actividades({ user }) {
           <Btn size="sm" variant="danger" onClick={() => handleDelete(r.id_actividad)}>Eliminar</Btn>
         </div>
       )
-    }] : [{
-      key: 'inscribirse', label: '', render: r => (
-        <Btn size="sm" variant={r.estado === 'abierta' ? 'primary' : 'ghost'} onClick={() => handleInscribir(r.id_actividad)}>
-          Inscribirse
-        </Btn>
-      )
-    }])
+    }] : [
+      {
+        key: 'mi_estado', label: 'Mi estado', render: r => {
+          const insc = misInscripciones[r.id_actividad];
+          if (insc) return estadoBadge(insc.estado);
+          return null;
+        }
+      },
+      {
+        key: 'accion_estudiante', label: '', render: r => {
+          const insc = misInscripciones[r.id_actividad];
+          if (insc) {
+            return (
+              <Btn size="sm" variant="danger" onClick={() => handleCancelarInscripcion(insc.id_inscripcion)}>
+                Cancelar
+              </Btn>
+            );
+          }
+          if (r.estado !== 'abierta') return null;
+          return (
+            <Btn size="sm" onClick={() => handleInscribir(r.id_actividad)}>
+              Inscribirse
+            </Btn>
+          );
+        }
+      }
+    ])
   ];
 
   return (
@@ -132,11 +174,11 @@ export default function Actividades({ user }) {
             </select>
           </Field>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Cupo máximo"><input style={inputStyle} type="number" value={form.cupo_maximo} onChange={e => setForm({ ...form, cupo_maximo: e.target.value })} /></Field>
+            <Field label="Cupo maximo"><input style={inputStyle} type="number" value={form.cupo_maximo} onChange={e => setForm({ ...form, cupo_maximo: e.target.value })} /></Field>
             <Field label="Horario"><input style={inputStyle} type="time" value={form.horario} onChange={e => setForm({ ...form, horario: e.target.value })} /></Field>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="Día">
+            <Field label="Dia">
               <select style={inputStyle} value={form.dia} onChange={e => setForm({ ...form, dia: e.target.value })}>
                 <option value="">Seleccionar...</option>
                 {DIAS.map(d => <option key={d} value={d}>{d}</option>)}

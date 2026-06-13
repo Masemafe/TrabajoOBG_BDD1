@@ -92,9 +92,9 @@ export default function Inscripciones({ user, estudiante_id }) {
           <Field label="Actividad">
             <select style={inputStyle} value={form.id_actividad} onChange={e => setForm({ ...form, id_actividad: e.target.value })}>
               <option value="">Seleccionar actividad...</option>
-              {actividades.map(a => (
+              {actividades.filter(a => a.estado === 'abierta').map(a => (
                 <option key={a.id_actividad} value={a.id_actividad}>
-                  {a.nombre} — {a.dia} {a.horario?.substring(0, 5)} [{a.estado}] ({a.confirmados}/{a.cupo_maximo})
+                  {a.nombre} — {a.dia} {a.horario?.substring(0, 5)} ({a.confirmados}/{a.cupo_maximo})
                 </option>
               ))}
             </select>

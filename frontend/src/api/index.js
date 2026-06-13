@@ -1,16 +1,31 @@
 const BASE = '/api';
 
+let authToken = null;
+
+export function setAuthToken(token) {
+  authToken = token;
+}
+
 async function req(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const headers = { 'Content-Type': 'application/json' };
+  if (authToken) headers['X-Auth-Token'] = authToken;
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(BASE + path, opts);
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Error del servidor');
+  if (!res.ok) {
+    if (res.status === 401) {
+      authToken = null;
+      window.dispatchEvent(new CustomEvent('auth:expired'));
+    }
+    throw new Error(data.error || 'Error del servidor');
+  }
   return data;
 }
 
 export const api = {
   login: (u, p) => req('POST', '/login', { username: u, password: p }),
+  logout: () => req('POST', '/logout'),
 
   // Disciplinas
   getDisciplinas: () => req('GET', '/disciplinas'),

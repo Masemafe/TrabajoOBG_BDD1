@@ -2,6 +2,9 @@
 -- BASE DE DATOS: Sistema de Gestión de Actividades Deportivas
 -- ============================================================
 
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS deportes_uni CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE deportes_uni;
 
@@ -71,6 +74,16 @@ CREATE TABLE IF NOT EXISTS ASISTENCIA (
     asistio BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE (id_inscripcion, fecha),
     FOREIGN KEY (id_inscripcion) REFERENCES INSCRIPCION(id_inscripcion)
+);
+
+CREATE TABLE IF NOT EXISTS USUARIO (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(64) NOT NULL,
+    role ENUM('admin', 'estudiante') NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    id_estudiante INT NULL,
+    FOREIGN KEY (id_estudiante) REFERENCES ESTUDIANTE(id_estudiante)
 );
 
 -- ─── DATOS MAESTROS ───────────────────────────────────────────────────────────
@@ -208,3 +221,7 @@ INSERT INTO ASISTENCIA (id_inscripcion, fecha, asistio) VALUES
 (20, '2025-03-03', FALSE), (21, '2025-03-03', TRUE),  (22, '2025-03-03', FALSE),
 (17, '2025-03-10', TRUE),  (18, '2025-03-10', FALSE), (19, '2025-03-10', TRUE),
 (20, '2025-03-10', FALSE), (21, '2025-03-10', FALSE), (22, '2025-03-10', TRUE);
+
+INSERT IGNORE INTO USUARIO (username, password_hash, role, nombre, id_estudiante) VALUES
+('admin',   SHA2('admin123',  256), 'admin',      'Administrador', NULL),
+('pparker', SHA2('spiderman', 256), 'estudiante', 'Peter Parker',  1);
