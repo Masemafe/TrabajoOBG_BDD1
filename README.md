@@ -18,7 +18,7 @@ Trabajo Obligatorio de Bases de Datos 1
 
 ```bash
 # 1. Clonar / descomprimir el proyecto
-cd sports-app
+cd TrabajoOBG_BDD1
 
 # 2. Levantar todo
 docker-compose up --build
