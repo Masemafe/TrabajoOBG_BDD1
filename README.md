@@ -79,7 +79,7 @@ npm start
 | Usuario | Contraseña | Rol |
 |---------|-----------|-----|
 | `admin` | `admin123` | Administrador (acceso completo) |
-| `estudiante` | `1234` | Estudiante (vista limitada) |
+| `pparker` | `spiderman` | Estudiante (vista limitada) |
 
 ---
 
